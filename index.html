@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Redux step by step</title>
+  <script src="https://unpkg.com/redux"></script>
+</head>
+<body>
+  <script>
+    // console.error();
+    console.error('createStore', Redux);
+    console.error('createStore', Object.keys(Redux));
+
+    const {createStore, combineReducers, bindActionCreators, applyMiddleware, compose} = Redux;
+
+    const reducer = (state = 0, action) => {
+      switch (action.type) {
+        case 'INCREMENT':
+        return state + 1;
+        case 'DECREMENT':
+        return state - 1;
+        default:
+        return state
+      }
+    };
+
+    const foo = (state = '', action) => {
+      switch (action.type) {
+        case 'FOO':
+          return action.payload;
+        case 'BAR':
+          return 'bar';
+        default:
+          return state
+      }
+    };
+
+    function createThunkMiddleware(extraArgument) {
+      return ({ dispatch, getState }) => next => action => {
+        if (typeof action === 'function') {
+          return action(dispatch, getState, extraArgument);
+        }
+
+        return next(action);
+      };
+    }
+
+    const thunk = createThunkMiddleware();
+
+    const store = createStore(combineReducers({reducer, foo}), {}, applyMiddleware(thunk));
+
+    const incrementAction = () => ({
+      type: 'INCREMENT'
+    });
+
+    const fooAction = dispatch => {
+      return fetch('https://jsonplaceholder.typicode.com/posts/2')
+        .then(response => response.json())
+        .then(data => {
+          return dispatch({
+            type: 'FOO',
+            payload: data
+          })
+        })
+    };
+
+    const boundActions = bindActionCreators({incrementAction, fooAction}, store.dispatch);
+
+    // console.error('boundActions', boundActions);
+
+    store.subscribe(() => console.log(store.getState()));
+
+    boundActions.incrementAction();
+    boundActions.fooAction();
+    // store.dispatch(incrementAction);
+    // store.dispatch(fooAction);
+
+  </script>
+</body>
+</html>
